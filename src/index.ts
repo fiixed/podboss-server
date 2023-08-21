@@ -4,7 +4,7 @@ import './db';
 
 const app = express();
 
-const PORT = process.env.PORT || 8989;
+const PORT = process.env.PORT || 8987;
 
 app.listen(PORT, () => {
     console.log(`Server is listening on ${PORT}`);
