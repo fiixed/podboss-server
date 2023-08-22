@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
-import { URI } from "#/utils/variables";
+import { MONGO_URI } from "#/utils/variables";
 
-mongoose.connect(URI).then(() => {
+mongoose.connect(MONGO_URI).then(() => {
     console.log('db is connected');
 }).catch((err) => {
     console.log(`db connection error: ${err}`);
