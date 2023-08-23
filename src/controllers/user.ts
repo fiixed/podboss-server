@@ -3,7 +3,7 @@ import { RequestHandler } from 'express';
 import { CreateUser, VerifyEmailRequest } from '#/@types/user';
 import User from '#/models/user';
 import { generateToken } from '#/utils/helper';
-import { sendVerificationMail } from '#/utils/mail';
+import { sendForgetPasswordLink, sendVerificationMail } from '#/utils/mail';
 import EmailVerificationToken from '#/models/emailVerificationToken';
 import PasswordResetToken from '#/models/passwordResetToken';
 import { isValidObjectId } from 'mongoose';
@@ -87,7 +87,11 @@ export const generateForgetPasswordLink: RequestHandler = async (req, res) => {
   if (!user) return res.status(404).json({ error: 'Account not found!' });
 
   // generate the link
-  // https://yourapp.com/reset-password?token=hfkshf4322hfjkds&userId=67jhfdsahf43
+  // https://yourapp.com/reset-passwod?token=hfkshf4322hfjkds&userId=67jhfdsahf43
+
+  await PasswordResetToken.findOneAndDelete({
+    owner: user._id,
+  });
 
   const token = crypto.randomBytes(36).toString('hex');
 
@@ -98,5 +102,25 @@ export const generateForgetPasswordLink: RequestHandler = async (req, res) => {
 
   const resetLink = `${PASSWORD_RESET_LINK}?token=${token}&userId=${user._id}`;
 
-  res.json({ resetLink });
+  sendForgetPasswordLink({ email: user.email, link: resetLink });
+
+  res.json({ message: 'Check you registered mail.' });
+};
+
+export const isValidPassResetToken: RequestHandler = async (req, res) => {
+  const { token, userId } = req.body;
+
+  const resetToken = await PasswordResetToken.findOne({ owner: userId });
+  if (!resetToken)
+    return res
+      .status(403)
+      .json({ error: 'Unauthorized access, invalid token!' });
+
+  const matched = await resetToken.compareToken(token);
+  if (!matched)
+    return res
+      .status(403)
+      .json({ error: 'Unauthorized access, invalid token!' });
+
+  res.json({ message: 'your token is valid.' });
 };
